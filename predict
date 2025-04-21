@@ -1,0 +1,80 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>예측 프로그램</title>
+  <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />
+  <script defer src="https://pyscript.net/latest/pyscript.js"></script>
+</head>
+<body>
+  <h1>🔮 예측 프로그램</h1>
+
+  <button onclick="handle_result('Red')">🔴 Red</button>
+  <button onclick="handle_result('Blue')">🔵 Blue</button>
+
+  <pre id="output"></pre>
+
+  <py-script>
+import random
+from js import document
+
+class Predictor:
+    def __init__(self, name, strategy):
+        self.name = name
+        self.strategy = strategy
+        self.correct_count = 0
+        self.total_count = 0
+
+    def predict(self, history):
+        if self.strategy == "AlwaysRed":
+            return "Red"
+        elif self.strategy == "AlwaysBlue":
+            return "Blue"
+        elif self.strategy == "LastResult":
+            return history[-1] if history else "Red"
+        elif self.strategy == "Random":
+            return random.choice(["Red", "Blue"])
+        elif self.strategy == "Pattern":
+            reds = history[-5:].count("Red")
+            blues = history[-5:].count("Blue")
+            return "Red" if reds > blues else "Blue"
+        elif self.strategy == "FlipFlop":
+            return "Blue" if history and history[-1] == "Red" else "Red"
+        else:
+            return "Red"
+
+    def update(self, prediction, actual):
+        self.total_count += 1
+        if prediction == actual:
+            self.correct_count += 1
+
+    def accuracy(self):
+        return round((self.correct_count / self.total_count) * 100, 1) if self.total_count else 0
+
+predictors = [
+    Predictor("AlwaysRed", "AlwaysRed"),
+    Predictor("AlwaysBlue", "AlwaysBlue"),
+    Predictor("LastResult", "LastResult"),
+    Predictor("Random", "Random"),
+    Predictor("Pattern", "Pattern"),
+    Predictor("FlipFlop", "FlipFlop")
+]
+
+history = []
+
+def handle_result(result):
+    history.append(result)
+    out = f"🔎 결과 입력: {result}\n\n"
+
+    for p in predictors:
+        pred = p.predict(history[:-1])
+        p.update(pred, result)
+        out += f"{p.name}: 예측={pred}, 정확도={p.accuracy()}%\n"
+
+    best = max(predictors, key=lambda p: p.accuracy())
+    out += f"\n👑 최고 예측자: {best.name} ({best.accuracy()}%)"
+
+    document.getElementById("output").innerText = out
+  </py-script>
+</body>
+</html>
